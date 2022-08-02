@@ -1,0 +1,136 @@
+<!DOCTYPE html >
+<html >
+	<head>
+		<style>
+			/* CSS comes here */
+			body {
+         display: block;
+			}
+			button {
+			    border-radius: 5px;
+          cursor: default;
+          background-color: #FAA810;
+					margin-left:  46%;
+					margin-bottom:  50px;
+          padding: 10px 26px;
+          border-width: 2px;
+          border-style: outset;
+          border-color: buttonborder;
+			}
+			#output {
+			    padding: 10px;
+			    width: 100%;
+					margin-left:  46%;
+			    line-height: 30px;
+			}
+			.hide {
+			    display:none;
+			}
+			.show {
+			    display:block;
+			}
+
+		</style>
+		<title> Speech to text </title>
+	</head>
+	<body>
+        <p><button type="button" onclick="runSpeechRecognition()">Start </button> &nbsp; <span id="action"></span></p>
+        <div id="output" class="hide"  style="font-size:40px">
+     <p> " " </p>
+        </div>
+        <button onclick="connectSerial()">connect</button>
+		<script>
+			/* JS comes here */
+			var port, textEncoder, writableStreamClosed, writer;
+			async function connectSerial() {
+					try {
+							// Prompt user to select any serial port.
+							port = await navigator.serial.requestPort();
+							await port.open({ baudRate: 9600 });
+
+							textEncoder = new TextEncoderStream();
+							writableStreamClosed = textEncoder.readable.pipeTo(port.writable);
+
+							writer = textEncoder.writable.getWriter();
+							listenToPort();
+					} catch {
+							alert("Serial Connection Failed");
+					}
+			}
+
+
+		    function runSpeechRecognition() {
+		        // get output div reference
+		        var output = document.getElementById("output");
+						// get action element reference
+							var action = document.getElementById('action')
+                // new speech recognition object
+                var SpeechRecognition = SpeechRecognition || webkitSpeechRecognition;
+                var recognition = new SpeechRecognition();
+								recognition.lang = 'ar-SA';
+
+                // This runs when the speech recognition service starts
+                recognition.onstart = function() {
+                    action.innerHTML = "<small>listening, please speak...</small>";
+                };
+
+                recognition.onspeechend = function() {
+                    action.innerHTML = "<small>stopped listening...</small>";
+                    recognition.stop();
+                }
+
+                // This runs when the speech recognition service returns result
+                recognition.onresult = function(event) {
+                     action.value = event.results[0][0].transcript;
+            output.innerHTML =  transcript + "<br/>" ;
+                    output.classList.remove("hide");
+                };
+
+                 // start recognition
+                 recognition.start();
+	        }
+
+
+					        document.querySelector('button').addEventListener('click', async () => {
+										// Prompt user to select any serial port.
+					            const port = await navigator.serial.requestPort();
+								 	// Wait for the serial port to open.
+					            await port.open({ baudRate: 9600 });
+
+					        });
+
+
+					        async function listenToPort() {
+					            const textDecoder = new TextDecoderStream();
+					            const readableStreamClosed = port.readable.pipeTo(textDecoder.writable);
+					            const reader = textDecoder.readable.getReader();
+					            // Listen to data coming from the serial device.
+					            while (true) {
+					                const { value, done } = await reader.read();
+					                if (done) {
+					                    // Allow the serial port to be closed later.
+					                    reader.releaseLock();
+					                    break;
+					                }
+					                // value is a string.
+					                appendToTerminal(value);
+					            }
+
+
+					        }
+					        async function sendSerialLine() {dataToSend = 'A'
+					            dataToSend = dataToSend + "\r\n";
+
+					            await writer.write(dataToSend);
+					        }
+					        async function sendSerialLineB() {
+					            dataToSend = 'B'
+					            dataToSend = dataToSend + "\r\n";
+
+					            await writer.write(dataToSend);
+					        }
+
+
+		</script>
+	</body>
+</html>
